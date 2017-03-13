@@ -33,6 +33,28 @@ func (p *cache) Get(key string) (Object, error) {
 	return res.value, res.err
 }
 
+func (sender *cache) GetString(key string) (result string, err error) {
+	object_value, get_err := sender.Get(key)
+	err = get_err
+	if err ==nil{
+		if typedValue, isTypeValue := object_value.(string); isTypeValue {
+			result = typedValue
+		}
+	}
+	return
+}
+
+func (sender *cache) GetInt(key string) (result int, err error) {
+	object_value, get_err := sender.Get(key)
+	err = get_err
+	if err ==nil{
+		if typedValue, isTypeValue := object_value.(int); isTypeValue {
+			result = typedValue
+		}
+	}
+	return
+}
+
 func (p *cache) SetWithFetcher(key string, fetcher CFetcher, args ...Object) {
 	p.fetcher_requests <- fetcherRequest{f: fetcher, key: key, fetcherArguments: args}
 }

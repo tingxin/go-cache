@@ -48,6 +48,25 @@ func TestCache_Get(t *testing.T) {
 	}
 }
 
+func TestCache_GetString(t *testing.T) {
+	runtime.GOMAXPROCS(4)
+	for i := 0; i < 100; i++ {
+		index := rand.Int() % len(testKeys)
+		key := testKeys[index]
+
+		if content, err := Default().GetString(key); err == nil {
+			if content == "" {
+				t.Logf("key %s and get message is : %s", key, "failed")
+			} else {
+				t.Logf("key %s and get message is : %s", key, content)
+			}
+		} else {
+			t.Logf("%v", err)
+			t.Fail()
+		}
+	}
+}
+
 func httpGet(uri string, token string) ([]byte, bool) {
 	if req, err := http.NewRequest("GET", uri, nil); err == nil {
 		if token != "" {
