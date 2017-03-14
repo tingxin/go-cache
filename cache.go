@@ -45,6 +45,7 @@ type cache struct {
 	DefaultExpired  time.Duration
 }
 
+// Get object value, you need do the type assertion to convert data to your type
 func (p *cache) Get(key string) (Object, error) {
 	response := make(chan cache_item)
 	p.get_requests <- valueRequest{key: key, response: response}
@@ -52,6 +53,7 @@ func (p *cache) Get(key string) (Object, error) {
 	return res.value, res.err
 }
 
+// Get string data
 func (sender *cache) GetString(key string) (result string, err error) {
 	object_value, get_err := sender.Get(key)
 	err = get_err
@@ -63,6 +65,7 @@ func (sender *cache) GetString(key string) (result string, err error) {
 	return
 }
 
+// Get int data
 func (sender *cache) GetInt(key string) (result int, err error) {
 	object_value, get_err := sender.Get(key)
 	err = get_err
@@ -74,6 +77,7 @@ func (sender *cache) GetInt(key string) (result int, err error) {
 	return
 }
 
+// Get float data
 func (p *cache) GetFloat64(key string) (result float64, err error) {
 	object_value, get_err := p.Get(key)
 	err = get_err
@@ -85,6 +89,7 @@ func (p *cache) GetFloat64(key string) (result float64, err error) {
 	return
 }
 
+// Get bool data
 func (p *cache) GetBool(key string) (result bool, err error) {
 	object_value, get_err := p.Get(key)
 	err = get_err
@@ -96,26 +101,33 @@ func (p *cache) GetBool(key string) (result bool, err error) {
 	return
 }
 
+// Set key
 func (p *cache) Set(key string, value Object) {
 	p.set_requests <- setRequest{key: key, value: value}
 }
 
+// Set key expires, if the key is expired, the key will be deleted automatically
 func (p *cache) SetKeyExpires(key string, expires time.Duration) {
 	p.keyExpiresMutex.Lock()
 	defer p.keyExpiresMutex.Unlock()
 	p.keyExpiresMap[key] = &expiresExtra{valueTime: time.Now(), expires: expires}
 }
 
+// Set the value expires, when the value expired, if this key have fetcher, it
+// will update data from fetcher, if not, it will give Expires error
 func (p *cache) SetValueExpires(key string, expires time.Duration) error {
 	res := make(chan error)
 	p.expires_requests <- expiresRequest{key: key, expires: expires, response: res}
 	return <-res
 }
 
+
+// Set fetcher for a key
 func (p *cache) SetWithFetcher(key string, fetcher CFetcher, args ...Object) {
 	p.fetcher_requests <- fetcherRequest{f: fetcher, key: key, fetcherArguments: args}
 }
 
+// Delete the cache item
 func (p *cache) Delete(key string) {
 	p.deleteKey_requests <- key
 	p.keyExpiresMutex.Lock()
