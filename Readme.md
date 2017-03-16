@@ -1,26 +1,46 @@
 # go cache
-* go-cache is concurrent, no-blocked, functional Cache by go language
+go-cache is concurrent, no-blocked, functional Cache by go language
  
-* go-cache use the fetcher get data automatically, user don't need take care the data when the data expired or invalid
+##Features
+* Support lazy getting by fetcher
+* Support data expires mechanism, it will use fetcher to refresh data automatically when data expires
+* Support key expires mechanism, it will delete expired key automatically
+* Support high concurrent
 
 ## Quick start
+###Cache data
 cache you data as follow:
 
     testKey := "k8s"
     testValue := "kuberneters"
-
     Cache().Set(testKey, testValue)
-
-When you need use it, you can get the data like this:
-
-    // because you know you token is string data, so you can use GetString method to get your token data, if you use Get method
-    // you need do the type assertion
     
-    if value, ok := go_cache.Cache().GetString(testKey); ok{
-    	fmt.Print(value)
-    }else {
-    	fmt.Print("can not find the key")
-    }
+In most time, your data come from network, db, or you need calculating it while using, so you can set a fetcher to the cache, when you need use the data or the data expired, the go_cache will help you to get the data automatically:
+
+    //Please check the httpGet method in cache_test.go file
+    testKeyOnRemote:="k8sOnRemote"
+    Cache().SetWithFetcher(testKeyOnRemote, func(arguments ...Object) (content Object, err error) {
+        	key, _ := arguments[0].(string)
+        	if remoteContent, checker := httpGet(mockService.URL+"/"+key, ""); checker {
+        		content = string(googleContent)
+        		err = nil
+        	} else {
+        		err = fmt.Errorf("get error when call %s", key)
+        	}
+        	return
+        }, testKeyOnRemote)
+        
+You fetcher function should be this type
+    
+    CFetcher
+
+### Get data
+You can get the data like this:
+
+    // because you know your data is string, so you can use GetString method to get your token data, if you use Get method
+    // you need do the type assertion
+    value, err := go_cache.Cache().GetString(testKey)
+    // if you did not set the key for cache, you will got the "key didn't found" error form err 
     
 If you cache a Struct data, you need use Get method and do the type assertion:
 
@@ -36,33 +56,19 @@ If you cache a Struct data, you need use Get method and do the type assertion:
 
     pTingxin, _ := p.(person)
     fmt.Println(pTingxin.Age)
-    Cache().SetKeyExpires(tingxin.Name, time.Second*2)
-    time.Sleep(time.Second*3)
-    _,dErr:=Cache().Get(tingxin.Name)
-    
-    if dErr==nil{
-    	t.Errorf("key %s should be deleted", tingxin.Name)
-    }
     	
-In most time, your data come from network or db, you can set a fetcher to the cache, when you need use the data or the data expired, the go_cache will help you 
-to get the data automatically:
-    
-    testKey = "time"
-    Cache().SetWithFetcher(testKey, func(arguments ...Object) (content Object, err error) {
-    	key, _ := arguments[0].(string)
-    	if googleContent, checker := httpGet(mockService.URL+"/"+key, ""); checker {
-    		content = string(googleContent)
-    		err = nil
-    	} else {
-    		err = fmt.Errorf("get error when call %s", key)
-    	}
-    	return
-    }, testKey)
-    
-    Cache().SetValueExpires(testKey, time.Second*5)
-    v, err = Cache().GetString(testKey)
-    fmt.Println(v)
+### Set Data Expires  
+you  can set the expires for a cache item, if the item have been set fetcher, it will update the data when it is expired, or you will get
+an "Data is expired" error when you get it
 
+    Cache().SetValueExpires(tingxin.Name, time.Second*2)
+    	
+### Set key Expires
+if key expires, the cache will delete it automatically
+    	
+    Cache().SetKeyExpires(tingxin.Name, time.Second*2)
+    	
+### more example
 You can use follow method to quickly get the target type data:
 
      token, _ := go_cache.Cache().Get("token")
@@ -73,4 +79,6 @@ You can use follow method to quickly get the target type data:
      
 Notice: you always need do the type assertion when use Get method.
 If you cache the "token" as string data, but you get it use GetInt or other method, it will return (nil, false)
+
+### You can get more example from cache_test.go file
 
