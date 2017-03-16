@@ -1,14 +1,14 @@
 # go cache
 go-cache is concurrent, no-blocked, functional Cache by go language
  
-##Features
+## Features
 * Support lazy getting by fetcher
 * Support data expires mechanism, it will use fetcher to refresh data automatically when data expires
 * Support key expires mechanism, it will delete expired key automatically
 * Support high concurrent
 
 ## Quick start
-###Cache data
+### Cache data
 cache you data as follow:
 
     testKey := "k8s"
